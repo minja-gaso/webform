@@ -21,7 +21,7 @@ public class FormCompletedServlet extends HttpServlet
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		String paramFormID = request.getPathInfo().substring(1);
-		int formID = Integer.parseInt(paramFormID);
+		long formID = Long.parseLong(paramFormID);
 		FormDAO formDAO = DAOFactory.getFormDAO();
 		Data data = new Data();
 		Form form = formDAO.getForm(formID);

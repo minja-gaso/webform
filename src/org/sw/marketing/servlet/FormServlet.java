@@ -66,16 +66,16 @@ public class FormServlet extends HttpServlet
 			}
 		}
 		//
-		int formID = 0;
+		long formID = 0;
 		try
 		{
 			if(parameterMap.get("FORM_ID") != null && parameterMap.get("FORM_ID").size() > 0)
 			{
-				formID = Integer.parseInt(parameterMap.get("FORM_ID").get(0));
+				formID = Long.parseLong(parameterMap.get("FORM_ID").get(0));
 			}
 			else
 			{
-				formID = Integer.parseInt(request.getPathInfo().substring(1));
+				formID = Long.parseLong(request.getPathInfo().substring(1));
 			}
 		}
 		catch(NumberFormatException e)
@@ -124,7 +124,7 @@ public class FormServlet extends HttpServlet
 		}
 		
 		// store submitted answers
-		ListMultimap<Integer, String> answerMap = ArrayListMultimap.create();
+		ListMultimap<Long, String> answerMap = ArrayListMultimap.create();
 		Answer answer = null;
 		for (String questionKey : parameterMap.keySet()) 
 		{
@@ -135,7 +135,7 @@ public class FormServlet extends HttpServlet
 			if(questionKey.contains("QUESTION_"))
 			{
 				String questionKeyIdStr = questionKey.split("QUESTION_")[1];
-				int questionKeyID = Integer.parseInt(questionKeyIdStr);
+				long questionKeyID = Long.parseLong(questionKeyIdStr);
 				List<String> questionAnswerList = parameterMap.get(questionKey);
 				Iterator<String> questionAnswerIter = questionAnswerList.iterator();
 				while(questionAnswerIter.hasNext())
@@ -195,7 +195,7 @@ public class FormServlet extends HttpServlet
 				
 				if(messageList == null)
 				{
-					int submissionID = submissionDAO.insert(formID);
+					long submissionID = submissionDAO.insert(formID);
 					for(Answer answerElement : submission.getAnswer())
 					{
 						Question question = questionDAO.getQuestion(answerElement.getQuestionId());
