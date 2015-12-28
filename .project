@@ -3,7 +3,6 @@
 	<name>webform</name>
 	<comment></comment>
 	<projects>
-		<project>webservices</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
