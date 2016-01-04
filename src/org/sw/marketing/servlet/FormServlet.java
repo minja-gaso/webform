@@ -24,6 +24,7 @@ import org.sw.marketing.data.form.Data.Message;
 import org.sw.marketing.data.form.Data.Submission;
 import org.sw.marketing.data.form.Data.Submission.Answer;
 import org.sw.marketing.transformation.TransformerHelper;
+import org.sw.marketing.util.ReadFile;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -271,13 +272,13 @@ public class FormServlet extends HttpServlet
 		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);
 		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/form.xsl"));
 		
-		/*
-		 * display output
-		 */
-		System.out.println(xmlStr);
+		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
+		String skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
+		skinHtmlStr = skinHtmlStr.replace("{NAME}", "List of Surveys");
+		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 		
-		response.setContentType("text/html");
-		response.getWriter().println(htmlStr);
+		System.out.println(xmlStr);
+		response.getWriter().print(skinHtmlStr);
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException

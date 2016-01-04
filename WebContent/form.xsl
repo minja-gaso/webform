@@ -2,13 +2,6 @@
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:output method="html" />
 	<xsl:template match="/">
-	    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
-	    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet"/>
-	    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,200" rel="stylesheet"/>
-    	<link rel="stylesheet" type="text/css" href="/css/main.css?v=1" />
-	    <style type="text/css">
-	    body { margin: 24px; }	    
-	    </style>
 		<form action="" method="post" name="portal_form" id="public-form">
 			<input type="hidden" name="ACTION" />
 			<input type="hidden" name="FORM_ID" value="{/data/form/id}" />
@@ -40,18 +33,33 @@
 									<span class="fa fa-asterisk"><xsl:text>&#x0A;</xsl:text></span>
 								</xsl:if>
 							</label>
-							<input type="text" class="form-control" name="QUESTION_{$questionId}" id="{id}">
-								<xsl:attribute name="value">
-									<xsl:choose>
-										<xsl:when test="/data/submission/answer/questionId = $questionId">
-											<xsl:value-of select="/data/submission/answer[questionId=$questionId]/answerValue" />
-										</xsl:when>
-										<xsl:otherwise>
-											<xsl:value-of select="defaultAnswer" />
-										</xsl:otherwise>
-									</xsl:choose>
-								</xsl:attribute>
-							</input>
+							<xsl:choose>
+								<xsl:when test="filter = 'none'">
+									<input type="text" class="form-control" name="QUESTION_{$questionId}" id="{id}">
+										<xsl:attribute name="value">
+											<xsl:choose>
+												<xsl:when test="/data/submission/answer/questionId = $questionId">
+													<xsl:value-of select="/data/submission/answer[questionId=$questionId]/answerValue" />
+												</xsl:when>
+												<xsl:otherwise>
+													<xsl:value-of select="defaultAnswer" />
+												</xsl:otherwise>
+											</xsl:choose>
+										</xsl:attribute>
+									</input>
+								</xsl:when>
+								<xsl:otherwise>								
+									<div class="input-group">
+										<input type="text" class="form-control datepicker" name="QUESTION_{$questionId}" id="{id}" readonly="readonly" />
+										<span class="input-group-addon" onclick="this.previousSibling.focus();"><span class="fa fa-calendar"><span class="sr-only">start date picker</span></span></span>
+										<script>
+										$(document).ready(function(){
+											$("#<xsl:value-of select="id" />").datepicker();
+										});
+										</script>
+									</div>	
+								</xsl:otherwise>
+							</xsl:choose>
 						</xsl:when>
 						<xsl:when test="type = 'textarea'">
 							<label for="{id}">
@@ -107,6 +115,34 @@
 										</label>
 									</div>
 								</xsl:for-each>
+							</fieldset>
+						</xsl:when>
+						<xsl:when test="type = 'pulldown'">
+							<fieldset>
+								<legend>
+									<xsl:if test="/data/message/questionId = $questionId">
+										<xsl:attribute name="class">error-style</xsl:attribute>
+									</xsl:if>
+									<xsl:value-of select="concat(number, '. ', label)" /> 
+									<xsl:if test="required = 'true'">
+										<span class="fa fa-asterisk"><xsl:text>&#x0A;</xsl:text></span>
+									</xsl:if>
+								</legend>
+								<select class="form-control" name="QUESTION_{$questionId}" id="{$questionId}_{position()}">
+									<option />
+									<xsl:for-each select="possibleAnswer">
+										<xsl:variable name="possibleAnswerId" select="id" />
+										<xsl:if test="/data/message/questionId = $questionId">
+											<xsl:attribute name="class">error-style</xsl:attribute>
+										</xsl:if>							
+										<option value="{id}">
+											<xsl:if test="/data/submission/answer/answerValue = $possibleAnswerId">
+												<xsl:attribute name="checked">checked</xsl:attribute>
+											</xsl:if>
+											<xsl:text><xsl:value-of select="label" /></xsl:text>
+										</option>
+									</xsl:for-each>
+								</select>								
 							</fieldset>
 						</xsl:when>
 					</xsl:choose>					
