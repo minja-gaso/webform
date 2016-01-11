@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:output method="html" />
+	<xsl:variable name="apos">'</xsl:variable>
 	<xsl:template match="/">
 		<form action="" method="post" name="portal_form" id="public-form">
 			<input type="hidden" name="ACTION" />
 			<input type="hidden" name="FORM_ID" value="{/data/form/id}" />
 			<input type="hidden" name="PREVIOUS_PAGE" value="{/data/form/currentPage}" />
 			<input type="hidden" name="CURRENT_PAGE" value="{/data/form/currentPage}" />
+			<input type="hidden" name="POST_FORM" value="false" />
 			<h1 class="form-group"><xsl:value-of select="/data/form/title" /></h1>
 			<xsl:if test="count(/data/message[type='error']) &gt; 0">
 				<div class="alert alert-danger" role="alert">
@@ -48,7 +50,7 @@
 										</xsl:attribute>
 									</input>
 								</xsl:when>
-								<xsl:otherwise>								
+								<xsl:when test="filter = 'date'">							
 									<div class="input-group">
 										<input type="text" class="form-control datepicker" name="QUESTION_{$questionId}" id="{id}" readonly="readonly" />
 										<span class="input-group-addon" onclick="this.previousSibling.focus();"><span class="fa fa-calendar"><span class="sr-only">start date picker</span></span></span>
@@ -58,7 +60,29 @@
 										});
 										</script>
 									</div>	
-								</xsl:otherwise>
+								</xsl:when>
+								<xsl:when test="filter = 'email'">							
+									<div class="input-group">
+										<input type="text" class="form-control" name="QUESTION_{$questionId}" id="{id}">
+											<xsl:attribute name="placeholder">
+												<xsl:choose>
+													<xsl:when test="string-length(defaultAnswer) &gt; 0">
+														<xsl:text><xsl:value-of select="defaultAnswer" /></xsl:text>
+													</xsl:when>
+													<xsl:otherwise>
+														<xsl:text>First.Last@example.com</xsl:text>
+													</xsl:otherwise>
+												</xsl:choose>
+											</xsl:attribute>
+											<xsl:if test="/data/submission/answer/questionId = $questionId">
+												<xsl:attribute name="value">
+													<xsl:value-of select="/data/submission/answer[questionId=$questionId]/answerValue" />
+												</xsl:attribute>
+											</xsl:if>
+										</input>
+										<span class="input-group-addon" onclick="this.previousSibling.focus();"><span class="fa fa-envelope"><span class="sr-only">enter email</span></span></span>
+									</div>	
+								</xsl:when>
 							</xsl:choose>
 						</xsl:when>
 						<xsl:when test="type = 'textarea'">
@@ -95,6 +119,7 @@
 								</legend>
 								<xsl:for-each select="possibleAnswer">
 									<xsl:variable name="possibleAnswerId" select="id" />
+									<input type="hidden" name="QUESTION_{$questionId}" id="{$questionId}_hidden" />
 									<div>
 										<label>		
 											<xsl:if test="/data/message/questionId = $questionId">
@@ -161,7 +186,7 @@
 										<xsl:text>javascript:;</xsl:text>
 									</xsl:when>
 									<xsl:otherwise>
-										<xsl:value-of select="concat('javascript:changePage(', number(/data/form/currentPage) - 1, ')')" />
+										<xsl:value-of select="concat('javascript:document.portal_form.ACTION.value=', $apos, 'PREVIOUS_PAGE', $apos, ';document.portal_form.submit();')" />
 									</xsl:otherwise>
 								</xsl:choose>
 							</xsl:attribute>
@@ -180,7 +205,8 @@
 										<xsl:text>javascript:;</xsl:text>
 									</xsl:when>
 									<xsl:otherwise>
-										<xsl:value-of select="concat('javascript:changePage(', number(/data/form/currentPage) + 1, ')')" />
+										<!--<xsl:value-of select="concat('javascript:changePage(', number(/data/form/currentPage) + 1, ')')" />-->
+										<xsl:value-of select="concat('javascript:document.portal_form.ACTION.value=', $apos, 'NEXT_PAGE', $apos, ';document.portal_form.submit();')" />
 									</xsl:otherwise>
 								</xsl:choose>
 							</xsl:attribute>
@@ -191,11 +217,15 @@
 			</nav>
 			<xsl:if test="/data/form/currentPage = /data/form/lastPage">
 				<div class="form-group text-center">
-					<a class="btn btn-primary" href="javascript:document.portal_form.action.value='submission';document.portal_form.ACTION.value='SUBMIT_FORM';document.portal_form.submit();">Submit Form</a>
+					<a class="btn btn-primary" href="javascript:document.portal_form.POST_FORM.value='true';document.portal_form.ACTION.value='SUBMIT_FORM';document.portal_form.submit();">Submit Form</a>
 				</div>
 			</xsl:if>
 			<footer class="text-center">Provided by <em><a href="#">Interactive Marketing</a></em> at <em><a href="#">Baylor Scott &amp; White</a></em></footer>
 		</form>
     	<script src="/js/form.js?v=1"></script>
+    	<script>
+    	var content = document.getElementById('content');
+    	content.id = 'survey';
+    	</script>
 	</xsl:template>
 </xsl:stylesheet>
