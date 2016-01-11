@@ -1,6 +1,9 @@
 package org.sw.marketing.servlet;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
@@ -14,6 +17,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.validator.routines.EmailValidator;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.sw.marketing.dao.DAOFactory;
 import org.sw.marketing.dao.answer.AnswerDAO;
 import org.sw.marketing.dao.form.FormDAO;
@@ -83,15 +89,29 @@ public class FormServlet extends HttpServlet
 		/*
 		 * get form ID
 		 */
+		boolean prettyUrl = false;
 		long formID = 0;
+		String formPrettyUrl = null;
 		try
 		{
 			formID = Long.parseLong(request.getPathInfo().substring(1));
 		}
 		catch(NumberFormatException e)
 		{
-			e.printStackTrace();
+			prettyUrl = true;
+			formPrettyUrl = request.getPathInfo().substring(1);
+		}		
+
+		Form form = null;
+		if(prettyUrl)
+		{
+			form = formDAO.getFormByPrettyUrl(formPrettyUrl);	
 		}
+		else
+		{
+			form = formDAO.getForm(formID);			
+		}	
+		formID = form.getId();
 		
 		/*
 		 * initialize page variable
@@ -264,7 +284,6 @@ public class FormServlet extends HttpServlet
 		/*
 		 * get form data
 		 */
-		Form form = formDAO.getForm(formID);		
 		java.util.List<Question> currentPageQuestions = questionDAO.getQuestionsByPage(formID, currentPage);
 		
 		/*
@@ -306,7 +325,19 @@ public class FormServlet extends HttpServlet
 		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/form.xsl"));
 
 		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
-		String skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
+		String skinHtmlStr = null;
+		
+		String skinUrl = form.getSkinUrl();
+		String skinCssSelector = form.getSkinSelector();
+		
+		if(skinUrl.length() > 0 && skinCssSelector.length() > 0)
+		{
+			skinHtmlStr = getSkinByUrl(skinUrl, skinCssSelector);
+		}
+		else
+		{
+			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
+		}
 		skinHtmlStr = skinHtmlStr.replace("{NAME}", "List of Surveys");
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 
@@ -351,6 +382,85 @@ public class FormServlet extends HttpServlet
 		}
 		
 		return message;
+	}
+	
+	public String getSkinByUrl(String skinUrl, String cssSelector)
+	{
+		/*
+		 * page to open
+		 */
+//		String skinUrl = "http://www.sw.org/bone-joint-institute/bone-joint-landing";
+		
+		/*
+		 * replaces content within cssSelector with {CONTENT} variable
+		 */
+//		String cssSelector = ".landingDetail";
+		
+		InputStream urlInputStream = null;
+		Document document = null;
+		try
+		{
+			urlInputStream = new URL(skinUrl).openStream();
+			document = Jsoup.parse(urlInputStream, "CP1252", skinUrl);
+			String url = document.baseUri();
+			boolean isHttp = false;
+			boolean isHttps = false;
+			if (url.substring(0, 5).equals("http:"))
+			{
+				isHttp = true;
+			}
+			else if (url.substring(0, 6).equals("https:"))
+			{
+				isHttps = true;
+			}
+			int position = -1;
+			if (url.indexOf("/") > -1)
+			{
+				position = url.indexOf("/");
+			}
+			String domain = url.substring(7);
+			if (domain.indexOf("/") > -1)
+			{
+				position = domain.indexOf("/");
+				domain = domain.substring(0, position);
+			}
+
+			if (isHttp)
+			{
+				domain = "http://" + domain + "/";
+			}
+			else if (isHttps)
+			{
+				domain = "https://" + domain + "/";
+			}
+
+			for(Element hrefElement : document.select("a, link"))
+			{
+				hrefElement.attr("href", hrefElement.absUrl("href"));
+			}
+			for(Element srcElement : document.select("button, img, input, script"))
+			{
+				srcElement.attr("src", srcElement.absUrl("src"));
+			}
+			for(Element style : document.select("style"))
+			{
+				String inlineText = style.html().trim();
+				inlineText = inlineText.replace("(/resources", "(" + domain + "/resources");
+				style.html(inlineText);
+			}
+			
+			document.select(cssSelector).html("{CONTENT}");
+		}
+		catch (MalformedURLException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return document.html();
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException

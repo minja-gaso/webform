@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry combineaccessrules="false" kind="src" path="/webservices"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/guava-18.0.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jsoup-1.8.3.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.8.0_66">
 		<attributes>
