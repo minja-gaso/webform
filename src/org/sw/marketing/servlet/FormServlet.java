@@ -1,5 +1,8 @@
 package org.sw.marketing.servlet;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -16,7 +19,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
+import org.apache.commons.mail.SimpleEmail;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -85,6 +92,8 @@ public class FormServlet extends HttpServlet
 				paramPostForm = Boolean.parseBoolean(parameterMap.get("POST_FORM").get(0));
 			}
 		}
+		
+		boolean formSubmitted = false;
 		
 		/*
 		 * get form ID
@@ -258,6 +267,8 @@ public class FormServlet extends HttpServlet
 			
 			if(paramAction != null && paramAction.equals("SUBMIT_FORM"))
 			{
+				formSubmitted = true;
+				
 				tempSubmissionDAO.copyTo(SESSION_ID, formID);
 				tempSubmissionAnswerDAO.copyTo(submission);
 				
@@ -265,10 +276,10 @@ public class FormServlet extends HttpServlet
 				 * fk constraint - delete answers first!
 				 */
 				tempSubmissionAnswerDAO.deleteFromTemp(submission);
-				tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);
+				tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);				
 				
-				response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
-				return;
+//				response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
+//				return;
 			}
 		}
 		else
@@ -321,9 +332,10 @@ public class FormServlet extends HttpServlet
 		/*
 		 * generate output
 		 */
-		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);
+		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);		
 		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/form.xsl"));
-
+		String emailStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/email_submission.xsl"));
+	
 		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
 		String skinHtmlStr = null;
 		
@@ -345,7 +357,35 @@ public class FormServlet extends HttpServlet
 		{
 			System.out.println(xmlStr);
 		}
-		response.getWriter().print(skinHtmlStr);
+
+		response.getWriter().println(skinHtmlStr);
+		
+
+		if(formSubmitted)
+		{
+			try
+			{
+		    	Email email = new HtmlEmail();
+		    	email.setHostName("smtp.googlemail.com");
+		    	email.setSmtpPort(465);
+		    	email.setAuthenticator(new DefaultAuthenticator("gasomi90@gmail.com", "Zaboravi90"));
+		    	email.setSSLOnConnect(true);
+		    	email.setFrom("gasomi90@gmail.com");
+		    	email.setSubject(form.getTitle());
+		    	email.setMsg(emailStr);
+		    	
+		    	String[] toEmails = { "minja.gaso@outlook.com", "minja.gaso@bswhealth.org" };
+		    	email.addTo(toEmails);
+		    	email.send();
+			}
+			catch (EmailException e)
+			{
+				e.printStackTrace();
+			}
+			
+			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
+			return;
+		}		
 	}
 	
 	protected ListMultimap<String, String> getFormFields(HttpServletRequest request)
