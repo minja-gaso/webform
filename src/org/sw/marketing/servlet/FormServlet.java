@@ -250,7 +250,14 @@ public class FormServlet extends HttpServlet
 						{
 							Answer answer = new Answer();
 							answer.setQuestionId(question.getId());
-							answer.setMultipleChoice(question.isRequired());
+							if(question.getType().startsWith("TEXT"))
+							{
+								answer.setMultipleChoice(false);
+							}
+							else
+							{
+								answer.setMultipleChoice(true);
+							}
 							answer.setAnswerValue(answerStr);
 							
 							tempSubmissionAnswerDAO.insert(submission, answer, question);
@@ -363,25 +370,25 @@ public class FormServlet extends HttpServlet
 
 		if(formSubmitted)
 		{
-			try
-			{
-		    	Email email = new HtmlEmail();
-		    	email.setHostName("smtp.googlemail.com");
-		    	email.setSmtpPort(465);
-		    	email.setAuthenticator(new DefaultAuthenticator("gasomi90@gmail.com", "Zaboravi90"));
-		    	email.setSSLOnConnect(true);
-		    	email.setFrom("gasomi90@gmail.com");
-		    	email.setSubject(form.getTitle());
-		    	email.setMsg(emailStr);
-		    	
-		    	String[] toEmails = { "minja.gaso@outlook.com", "minja.gaso@bswhealth.org" };
-		    	email.addTo(toEmails);
-		    	email.send();
-			}
-			catch (EmailException e)
-			{
-				e.printStackTrace();
-			}
+//			try
+//			{
+//		    	Email email = new HtmlEmail();
+//		    	email.setHostName("smtp.googlemail.com");
+//		    	email.setSmtpPort(465);
+//		    	email.setAuthenticator(new DefaultAuthenticator("gasomi90@gmail.com", "Zaboravi90"));
+//		    	email.setSSLOnConnect(true);
+//		    	email.setFrom("gasomi90@gmail.com");
+//		    	email.setSubject(form.getTitle());
+//		    	email.setMsg(emailStr);
+//		    	
+//		    	String[] toEmails = { "minja.gaso@outlook.com", "minja.gaso@bswhealth.org" };
+//		    	email.addTo(toEmails);
+//		    	email.send();
+//			}
+//			catch (EmailException e)
+//			{
+//				e.printStackTrace();
+//			}
 			
 			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
 			return;
