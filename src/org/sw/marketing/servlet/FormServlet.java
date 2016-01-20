@@ -120,7 +120,16 @@ public class FormServlet extends HttpServlet
 		{
 			form = formDAO.getForm(formID);			
 		}	
-		formID = form.getId();
+		
+		if(form != null)
+		{
+			formID = form.getId();
+		}
+		else
+		{
+			response.getWriter().println("The form you are looking for could not be found.");
+			return;
+		}
 		
 		/*
 		 * initialize page variable
@@ -339,9 +348,15 @@ public class FormServlet extends HttpServlet
 		/*
 		 * generate output
 		 */
-		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);		
-		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/form.xsl"));
-		String emailStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/email_submission.xsl"));
+		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);	
+		
+		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "form.xsl";
+		String xslStr = ReadFile.getSkin(xslScreen);
+		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
+		
+		String emailScreen = getServletContext().getInitParameter("assetXslPath") + "email_submission.xsl";
+		String emailTemplateStr = ReadFile.getSkin(emailScreen);
+		String emailStr = TransformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(emailTemplateStr.getBytes()));
 	
 		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
 		String skinHtmlStr = null;
@@ -357,7 +372,8 @@ public class FormServlet extends HttpServlet
 		{
 			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
 		}
-		skinHtmlStr = skinHtmlStr.replace("{NAME}", "List of Surveys");
+		
+		skinHtmlStr = skinHtmlStr.replace("{NAME}", form.getTitle());
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 
 		if(displayXml)

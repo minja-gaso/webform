@@ -6,4 +6,5 @@
             maxWait="-1"/>
   <!-- <Parameter name="assetPath" value="E:\\assets\\" />-->
   <Parameter name="assetPath" value="C:\\development\\assets\\" />
+  <Parameter name="assetXslPath" value="C:\\development\\assets\\xsl\\webform\\" />
 </Context>

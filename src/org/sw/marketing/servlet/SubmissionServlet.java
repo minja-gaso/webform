@@ -1,5 +1,6 @@
 package org.sw.marketing.servlet;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import org.sw.marketing.data.form.Data.Form.Question;
 import org.sw.marketing.data.form.Data.Form.Question.PossibleAnswer;
 import org.sw.marketing.data.form.Data.Submission.Answer;
 import org.sw.marketing.transformation.TransformerHelper;
+import org.sw.marketing.util.ReadFile;
 
 @WebServlet("/submission/*")
 public class SubmissionServlet extends HttpServlet
@@ -86,8 +88,10 @@ public class SubmissionServlet extends HttpServlet
 		/*
 		 * generate output
 		 */
-		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);
-		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, getServletContext().getResourceAsStream("/submission.xsl"));
+		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);		
+		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "submission.xsl";
+		String xslStr = ReadFile.getSkin(xslScreen);
+		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
 		
 		/*
 		 * display output
