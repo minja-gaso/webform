@@ -20,7 +20,8 @@ public class FormCompletedServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+
+	protected void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		String paramFormID = request.getPathInfo().substring(1);
 		long formID = Long.parseLong(paramFormID);
@@ -32,13 +33,22 @@ public class FormCompletedServlet extends HttpServlet
 			data.getForm().add(form);
 		}
 		
+		if(request.getAttribute("SELF_ASSESSMENT_SCORE") != null)
+		{
+			int score = (int) request.getAttribute("SELF_ASSESSMENT_SCORE");
+			form.setScore(score);
+		}
+		
 		/*
 		 * generate output
 		 */
-		String xmlStr = TransformerHelper.getXmlStr("org.sw.marketing.data.form", data);
+		TransformerHelper transformerHelper = new TransformerHelper();
+		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslFormsPath"));
+		
+		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.form", data);
 		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "complete.xsl";
 		String xslStr = ReadFile.getSkin(xslScreen);
-		String htmlStr = TransformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
+		String htmlStr = transformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
 		
 		/*
 		 * display output
@@ -47,6 +57,15 @@ public class FormCompletedServlet extends HttpServlet
 		
 		response.setContentType("text/html");
 		response.getWriter().println(htmlStr);
+	}
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		process(request, response);
+	}
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		process(request, response);
 	}
 
 }

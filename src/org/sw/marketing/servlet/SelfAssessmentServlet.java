@@ -41,8 +41,8 @@ import org.sw.marketing.util.ReadFile;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 
-@WebServlet("/public/*")
-public class FormServlet extends HttpServlet
+@WebServlet("/self-assessment/*")
+public class SelfAssessmentServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 	private static final boolean displayXml = true;
@@ -428,8 +428,22 @@ public class FormServlet extends HttpServlet
 			int count = form.getSubmissionCount() + 1;
 			formDAO.updateFormSubmissionCount(formID, count);
 			
-			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
-			return;
+			java.util.List<Answer> answers = submissionAnswerDAO.getSubmissionAnswers(submission.getId());
+			if(answers != null)
+			{
+				java.util.Iterator<Answer> answersIter = answers.iterator();
+				int selfAssessmentScore = 0;
+				while(answersIter.hasNext())
+				{
+					Answer answer = answersIter.next();
+					selfAssessmentScore += Integer.parseInt(answer.getAnswerValue());
+				}
+				request.setAttribute("SELF_ASSESSMENT_SCORE", selfAssessmentScore);
+				request.getRequestDispatcher("/completed/" + form.getId()).forward(request, response);
+			}
+			
+//			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
+//			return;
 		}		
 	}
 	
