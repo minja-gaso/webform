@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,6 +19,7 @@ import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
 import org.apache.commons.mail.SimpleEmail;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -261,7 +264,15 @@ public class FormServlet extends HttpServlet
 							}
 							answer.setAnswerValue(answerStr);
 							
-							tempSubmissionAnswerDAO.insert(submission, answer, question);
+							
+							if(form.getStatus().equals("live"))
+							{
+								tempSubmissionAnswerDAO.insert(submission, answer, question);
+							}
+							else
+							{
+								System.out.println("Not live!");
+							}
 						}
 					}
 				}
@@ -273,7 +284,7 @@ public class FormServlet extends HttpServlet
 				submission.getAnswer().addAll(tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission));
 			}
 			
-			if(paramAction != null && paramAction.equals("SUBMIT_FORM"))
+			if(paramAction != null && paramAction.equals("SUBMIT_FORM") && form.getStatus().equals("live"))
 			{
 				formSubmitted = true;
 				
@@ -453,16 +464,73 @@ public class FormServlet extends HttpServlet
 	protected Message processQuestion(Question question, String answer)
 	{
 		Message message = null;
-		if(question.isRequired())
+		if(question.isRequired() && answer.length() == 0)
 		{
-			if(answer.length() == 0)
+			message = new Message();
+			message.setQuestionId(question.getId());
+			message.setQuestionNumber(question.getNumber());
+			message.setType("error");
+			message.setSubtype("required");
+			message.setLabel("Question " + question.getNumber() + " is required.");
+		}
+		else if(question.getFilter().equals("email"))
+		{
+			EmailValidator emailValidator = EmailValidator.getInstance();
+			/*
+			 * if question is required and the answer is not a valid email
+			 */
+			if(!emailValidator.isValid(answer) && question.isRequired())
 			{
 				message = new Message();
 				message.setQuestionId(question.getId());
 				message.setQuestionNumber(question.getNumber());
 				message.setType("error");
-				message.setSubtype("required");
-				message.setLabel("Question " + question.getNumber() + " is required.");
+				message.setSubtype("email");
+				message.setLabel("Question " + question.getNumber() + " must have a valid email address.");
+			}
+			/*
+			 * if question is not required but is answered with an invalid email
+			 */
+			else if(!emailValidator.isValid(answer) && !question.isRequired() && answer.length() > 0)
+			{
+				message = new Message();
+				message.setQuestionId(question.getId());
+				message.setQuestionNumber(question.getNumber());
+				message.setType("error");
+				message.setSubtype("email");
+				message.setLabel("If you are going to answer Question " + question.getNumber() + " , please enter a valid email address.");
+			}
+		}
+		else if(question.getFilter().equals("date"))
+		{
+			Pattern pattern = Pattern.compile("(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01])/((19|20)\\d\\d)");
+			Matcher matcher = pattern.matcher(answer);
+			/*
+			 * if question is required and answer doesn't match desired format
+			 */
+			if(question.isRequired())
+			{
+				if(!matcher.matches())
+				{
+					message = new Message();
+					message.setQuestionId(question.getId());
+					message.setQuestionNumber(question.getNumber());
+					message.setType("error");
+					message.setSubtype("date");
+					message.setLabel("Question " + question.getNumber() + " date is invalid.");
+				}
+			}
+			else if(!question.isRequired() && answer.length() > 0)
+			{
+				if(!matcher.matches())
+				{
+					message = new Message();
+					message.setQuestionId(question.getId());
+					message.setQuestionNumber(question.getNumber());
+					message.setType("error");
+					message.setSubtype("date");
+					message.setLabel("If you are going to answer Question " + question.getNumber() + " , please enter a valid date.");
+				}
 			}
 		}
 		

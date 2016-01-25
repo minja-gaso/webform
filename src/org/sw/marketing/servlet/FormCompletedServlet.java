@@ -76,7 +76,7 @@ public class FormCompletedServlet extends HttpServlet
 		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslFormsPath"));
 		
 		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.form", data);
-		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "complete.xsl";
+		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "form_message.xsl";
 		String xslStr = ReadFile.getSkin(xslScreen);
 		String htmlStr = transformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
 		
