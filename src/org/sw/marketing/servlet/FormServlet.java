@@ -227,6 +227,7 @@ public class FormServlet extends HttpServlet
 			{
 				currentPage = previousPage - 1;
 			}
+		}
 			
 			submission.setPage(previousPage);
 			
@@ -283,22 +284,26 @@ public class FormServlet extends HttpServlet
 			{
 				submission.getAnswer().addAll(tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission));
 			}
-			
-			if(paramAction != null && paramAction.equals("SUBMIT_FORM") && form.getStatus().equals("live"))
+		if(messageList == null)
+		{
+			if(paramAction != null && paramAction.equals("SUBMIT_FORM"))
 			{
+				/*
+				 * don't check if survey live so that you can still see thank you screen!
+				 */
 				formSubmitted = true;
 				
-				tempSubmissionDAO.copyTo(SESSION_ID, formID);
-				tempSubmissionAnswerDAO.copyTo(submission);
-				
-				/*
-				 * fk constraint - delete answers first!
-				 */
-				tempSubmissionAnswerDAO.deleteFromTemp(submission);
-				tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);				
-				
-//				response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
-//				return;
+				if(form.getStatus().equals("live"))
+				{
+					tempSubmissionDAO.copyTo(SESSION_ID, formID);
+					tempSubmissionAnswerDAO.copyTo(submission);
+					
+					/*
+					 * fk constraint - delete answers first!
+					 */
+					tempSubmissionAnswerDAO.deleteFromTemp(submission);
+					tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);
+				}				
 			}
 		}
 		else

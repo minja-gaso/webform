@@ -224,6 +224,7 @@ public class SelfAssessmentServlet extends HttpServlet
 			{
 				currentPage = previousPage - 1;
 			}
+		}
 			
 			submission.setPage(previousPage);
 			
@@ -261,7 +262,15 @@ public class SelfAssessmentServlet extends HttpServlet
 							}
 							answer.setAnswerValue(answerStr);
 							
-							tempSubmissionAnswerDAO.insert(submission, answer, question);
+							
+							if(form.getStatus().equals("live"))
+							{
+								tempSubmissionAnswerDAO.insert(submission, answer, question);
+							}
+							else
+							{
+								System.out.println("Not live!");
+							}
 						}
 					}
 				}
@@ -272,22 +281,26 @@ public class SelfAssessmentServlet extends HttpServlet
 			{
 				submission.getAnswer().addAll(tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission));
 			}
-			
+		if(messageList == null)
+		{
 			if(paramAction != null && paramAction.equals("SUBMIT_FORM"))
 			{
+				/*
+				 * don't check if survey live so that you can still see thank you screen!
+				 */
 				formSubmitted = true;
 				
-				tempSubmissionDAO.copyTo(SESSION_ID, formID);
-				tempSubmissionAnswerDAO.copyTo(submission);
-				
-				/*
-				 * fk constraint - delete answers first!
-				 */
-				tempSubmissionAnswerDAO.deleteFromTemp(submission);
-				tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);				
-				
-//				response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
-//				return;
+				if(form.getStatus().equals("live"))
+				{
+					tempSubmissionDAO.copyTo(SESSION_ID, formID);
+					tempSubmissionAnswerDAO.copyTo(submission);
+					
+					/*
+					 * fk constraint - delete answers first!
+					 */
+					tempSubmissionAnswerDAO.deleteFromTemp(submission);
+					tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);
+				}				
 			}
 		}
 		else
