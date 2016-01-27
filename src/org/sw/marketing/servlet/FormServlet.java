@@ -40,6 +40,7 @@ import org.sw.marketing.data.form.Data.Submission;
 import org.sw.marketing.data.form.Data.Submission.Answer;
 import org.sw.marketing.transformation.TransformerHelper;
 import org.sw.marketing.util.ReadFile;
+import org.sw.marketing.util.SkinReader;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -255,7 +256,7 @@ public class FormServlet extends HttpServlet
 						{
 							Answer answer = new Answer();
 							answer.setQuestionId(question.getId());
-							if(question.getType().startsWith("TEXT"))
+							if(question.getType().startsWith("text"))
 							{
 								answer.setMultipleChoice(false);
 							}
@@ -401,52 +402,41 @@ public class FormServlet extends HttpServlet
 		
 		if(skinUrl.length() > 0 && skinCssSelector.length() > 0)
 		{
-			skinHtmlStr = getSkinByUrl(skinUrl, skinCssSelector);
+			skinHtmlStr = SkinReader.getSkinByUrl(form);
 		}
 		else
 		{
 			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
 		}
 		
-		skinHtmlStr = skinHtmlStr.replace("{NAME}", form.getTitle());
+		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 
 		if(displayXml)
 		{
 			System.out.println(xmlStr);
 		}
-
-		response.getWriter().println(skinHtmlStr);
 		
 
 		if(formSubmitted)
-		{
-//			try
-//			{
-//		    	Email email = new HtmlEmail();
-//		    	email.setHostName("mailrelay.sw.org");
-//		    	email.setSmtpPort(465);
-//		    	email.setAuthenticator(new DefaultAuthenticator("minja.gaso@bswhealth.org", "Zaboravi90"));
-//		    	email.setSSLOnConnect(true);
-//		    	email.setFrom("minja.gaso@bswhealth.org");
-//		    	email.setSubject(form.getTitle());
-//		    	email.setMsg(emailStr);
-//		    	
-//		    	String[] toEmails = { "minja.gaso@outlook.com", "minja.gaso@bswhealth.org" };
-//		    	email.addTo(toEmails);
-//		    	email.send();
-//			}
-//			catch (EmailException e)
-//			{
-//				e.printStackTrace();
-//			}
+		{			
+			if(form.getStatus().equals("live"))
+			{
+				int count = form.getSubmissionCount() + 1;
+				formDAO.updateFormSubmissionCount(formID, count);
+			}
 			
-			int count = form.getSubmissionCount() + 1;
-			formDAO.updateFormSubmissionCount(formID, count);
+			String redirectId = "" + formID;
+			if(prettyUrl)
+			{
+				redirectId = form.getPrettyUrl();
+			}
 			
-			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + formID);
+			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + redirectId);
 			return;
-		}		
+		}			
+
+		response.getWriter().println(skinHtmlStr);
 	}
 	
 	protected ListMultimap<String, String> getFormFields(HttpServletRequest request)
@@ -540,85 +530,6 @@ public class FormServlet extends HttpServlet
 		}
 		
 		return message;
-	}
-	
-	public String getSkinByUrl(String skinUrl, String cssSelector)
-	{
-		/*
-		 * page to open
-		 */
-//		String skinUrl = "http://www.sw.org/bone-joint-institute/bone-joint-landing";
-		
-		/*
-		 * replaces content within cssSelector with {CONTENT} variable
-		 */
-//		String cssSelector = ".landingDetail";
-		
-		InputStream urlInputStream = null;
-		Document document = null;
-		try
-		{
-			urlInputStream = new URL(skinUrl).openStream();
-			document = Jsoup.parse(urlInputStream, "CP1252", skinUrl);
-			String url = document.baseUri();
-			boolean isHttp = false;
-			boolean isHttps = false;
-			if (url.substring(0, 5).equals("http:"))
-			{
-				isHttp = true;
-			}
-			else if (url.substring(0, 6).equals("https:"))
-			{
-				isHttps = true;
-			}
-			int position = -1;
-			if (url.indexOf("/") > -1)
-			{
-				position = url.indexOf("/");
-			}
-			String domain = url.substring(7);
-			if (domain.indexOf("/") > -1)
-			{
-				position = domain.indexOf("/");
-				domain = domain.substring(0, position);
-			}
-
-			if (isHttp)
-			{
-				domain = "http://" + domain + "/";
-			}
-			else if (isHttps)
-			{
-				domain = "https://" + domain + "/";
-			}
-
-			for(Element hrefElement : document.select("a, link"))
-			{
-				hrefElement.attr("href", hrefElement.absUrl("href"));
-			}
-			for(Element srcElement : document.select("button, img, input, script"))
-			{
-				srcElement.attr("src", srcElement.absUrl("src"));
-			}
-			for(Element style : document.select("style"))
-			{
-				String inlineText = style.html().trim();
-				inlineText = inlineText.replace("(/resources", "(" + domain + "/resources");
-				style.html(inlineText);
-			}
-			
-			document.select(cssSelector).html("{CONTENT}");
-		}
-		catch (MalformedURLException e)
-		{
-			e.printStackTrace();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-		
-		return document.html();
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException

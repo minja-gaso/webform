@@ -2,12 +2,19 @@ package org.sw.marketing.servlet;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.sw.marketing.dao.DAOFactory;
 import org.sw.marketing.dao.form.FormDAO;
 import org.sw.marketing.dao.question.QuestionDAO;
@@ -20,6 +27,7 @@ import org.sw.marketing.data.form.Data.Score;
 import org.sw.marketing.data.form.Data.Submission;
 import org.sw.marketing.transformation.TransformerHelper;
 import org.sw.marketing.util.ReadFile;
+import org.sw.marketing.util.SkinReader;
 
 @WebServlet("/completed/*")
 public class FormCompletedServlet extends HttpServlet
@@ -35,11 +43,33 @@ public class FormCompletedServlet extends HttpServlet
 		QuestionDAO questionDAO = DAOFactory.getQuestionDAO();
 		SubmissionDAO submissionDAO = DAOFactory.getSubmissionDAO();
 		SubmissionAnswerDAO submissionAnswerDAO = DAOFactory.getSubmissionAnswerDAO();
-		
-		String paramFormID = request.getPathInfo().substring(1);
-		long formID = Long.parseLong(paramFormID);
+
 		Data data = new Data();
-		Form form = formDAO.getForm(formID);
+		/*
+		 * get form
+		 */
+		boolean prettyUrl = false;
+		long formID = 0;
+		String formPrettyUrl = null;
+		try
+		{
+			formID = Long.parseLong(request.getPathInfo().substring(1));
+		}
+		catch(NumberFormatException e)
+		{
+			prettyUrl = true;
+			formPrettyUrl = request.getPathInfo().substring(1);
+		}		
+
+		Form form = null;
+		if(prettyUrl)
+		{
+			form = formDAO.getFormByPrettyUrl(formPrettyUrl);	
+		}
+		else
+		{
+			form = formDAO.getForm(formID);			
+		}	
 		
 		/*
 		 * initialize submission
@@ -79,14 +109,31 @@ public class FormCompletedServlet extends HttpServlet
 		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "form_message.xsl";
 		String xslStr = ReadFile.getSkin(xslScreen);
 		String htmlStr = transformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
+		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
+		String skinHtmlStr = null;
 		
+		String skinUrl = form.getSkinUrl();
+		String skinCssSelector = form.getSkinSelector();
+		
+		if(skinUrl.length() > 0 && skinCssSelector.length() > 0)
+		{
+			skinHtmlStr = SkinReader.getSkinByUrl(form);
+		}
+		else
+		{
+			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
+		}
+		
+		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
+		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+
 		/*
 		 * display output
 		 */
 		System.out.println(xmlStr);
 		
 		response.setContentType("text/html");
-		response.getWriter().println(htmlStr);
+		response.getWriter().println(skinHtmlStr);
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
