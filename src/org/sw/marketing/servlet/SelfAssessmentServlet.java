@@ -3,6 +3,7 @@ package org.sw.marketing.servlet;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -50,6 +51,7 @@ public class SelfAssessmentServlet extends HttpServlet
 	protected void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		String SESSION_ID = request.getSession().getId();
+		String IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
 
 		/*
 		 * initialize data access objects
@@ -155,7 +157,7 @@ public class SelfAssessmentServlet extends HttpServlet
 		Submission submission = tempSubmissionDAO.getSubmissionBySessionID(formID, SESSION_ID);
 		if(submission == null)
 		{
-			tempSubmissionDAO.insert(formID, SESSION_ID);
+			tempSubmissionDAO.insert(formID, SESSION_ID, IP_ADDRESS);
 			submission = tempSubmissionDAO.getSubmissionBySessionID(formID, SESSION_ID);
 		}
 		

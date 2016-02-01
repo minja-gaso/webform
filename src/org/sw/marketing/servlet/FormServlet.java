@@ -42,6 +42,7 @@ import org.sw.marketing.data.form.Data.Submission.Answer;
 import org.sw.marketing.transformation.TransformerHelper;
 import org.sw.marketing.util.ReadFile;
 import org.sw.marketing.util.SkinReader;
+import org.sw.marketing.util.SurveyHelper;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -374,6 +375,9 @@ public class FormServlet extends HttpServlet
 
 		form.setCurrentPage(currentPage);
 		form.setLastPage(lastPage);
+
+		form = SurveyHelper.verifyStartAndEndDate(form);
+		
 		data.getForm().add(form);
 
 		/*

@@ -6,12 +6,18 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,8 +33,10 @@ import org.sw.marketing.data.form.Data.Form;
 import org.sw.marketing.data.form.Data.Score;
 import org.sw.marketing.data.form.Data.Submission;
 import org.sw.marketing.transformation.TransformerHelper;
+import org.sw.marketing.util.DateToXmlGregorianCalendar;
 import org.sw.marketing.util.ReadFile;
 import org.sw.marketing.util.SkinReader;
+import org.sw.marketing.util.SurveyHelper;
 
 @WebServlet("/completed/*")
 public class FormCompletedServlet extends HttpServlet
@@ -87,6 +95,8 @@ public class FormCompletedServlet extends HttpServlet
 			int score = (int) request.getAttribute("SELF_ASSESSMENT_SCORE");
 			form.setScore(score);
 		}
+		
+		form = SurveyHelper.verifyStartAndEndDate(form);
 
 		if(form != null)
 		{
