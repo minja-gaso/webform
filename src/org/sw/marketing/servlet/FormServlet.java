@@ -3,6 +3,7 @@ package org.sw.marketing.servlet;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -54,6 +55,7 @@ public class FormServlet extends HttpServlet
 	protected void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		String SESSION_ID = request.getSession().getId();
+		String IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
 
 		/*
 		 * initialize data access objects
@@ -75,21 +77,20 @@ public class FormServlet extends HttpServlet
 		 * determine action
 		 */
 		String paramAction = null;
-		boolean paramPostForm = false;
-
 		if (parameterMap != null)
 		{
 			if (parameterMap.get("ACTION") != null && parameterMap.get("ACTION").size() > 0)
 			{
 				paramAction = parameterMap.get("ACTION").get(0);
 			}
-			if (parameterMap.get("POST_FORM") != null && parameterMap.get("POST_FORM").size() > 0)
-			{
-				paramPostForm = Boolean.parseBoolean(parameterMap.get("POST_FORM").get(0));
-			}
 		}
 
-		boolean formSubmitted = false;
+		boolean submitted = false;
+		if (paramAction != null && paramAction.equals("SUBMIT_FORM"))
+		{
+			submitted = true;
+		}		
+		boolean isSubmissionValid = false;
 
 		/*
 		 * get form ID
@@ -181,14 +182,14 @@ public class FormServlet extends HttpServlet
 		Submission submission = tempSubmissionDAO.getSubmissionBySessionID(formID, SESSION_ID);
 		if (submission == null)
 		{
-			tempSubmissionDAO.insert(formID, SESSION_ID);
+			tempSubmissionDAO.insert(formID, SESSION_ID, IP_ADDRESS);
 			submission = tempSubmissionDAO.getSubmissionBySessionID(formID, SESSION_ID);
 		}
 
 		/*
 		 * determine whether to store submitted answers or send error
 		 */
-		if (goNextPage)
+		if (goNextPage || submitted)
 		{
 			for (String key : parameterMap.keySet())
 			{
@@ -234,13 +235,13 @@ public class FormServlet extends HttpServlet
 				}
 			}
 		}
+		
+		if(messageList == null && submitted)
+		{
+			isSubmissionValid = true;
+		}
 
 		submission.setPage(previousPage);
-
-		if (tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission) != null && goNextPage)
-		{
-			tempSubmissionAnswerDAO.deleteSubmissionAnswersByPage(submission);
-		}
 
 		/*
 		 * insert questions into temp answers table
@@ -284,36 +285,37 @@ public class FormServlet extends HttpServlet
 		}
 
 		submission.setPage(currentPage);
-		if (tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission) != null)
+		java.util.List<Answer> submissionAnswersByPage = tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission);
+		if (submissionAnswersByPage != null)
 		{
-			submission.getAnswer().addAll(tempSubmissionAnswerDAO.getSubmissionAnswersByPage(submission));
+			submission.getAnswer().addAll(submissionAnswersByPage);
 		}
-		if (messageList == null)
+		if (isSubmissionValid)
 		{
-			if (paramAction != null && paramAction.equals("SUBMIT_FORM"))
+			/*
+			 * don't check if survey live so that you can still see thank
+			 * you screen!
+			 */
+			if (form.getStatus().equals("live"))
 			{
+				tempSubmissionDAO.copyTo(SESSION_ID, formID);
+				tempSubmissionAnswerDAO.copyTo(submission);
+
 				/*
-				 * don't check if survey live so that you can still see thank
-				 * you screen!
+				 * fk constraint - delete answers first!
 				 */
-				formSubmitted = true;
-
-				if (form.getStatus().equals("live"))
-				{
-					tempSubmissionDAO.copyTo(SESSION_ID, formID);
-					tempSubmissionAnswerDAO.copyTo(submission);
-
-					/*
-					 * fk constraint - delete answers first!
-					 */
-					tempSubmissionAnswerDAO.deleteFromTemp(submission);
-					tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);
-				}
+				tempSubmissionAnswerDAO.deleteFromTemp(submission);
+				tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);
 			}
 		}
 		else
 		{
 			currentPage = previousPage;
+		}
+		
+		if(submissionAnswersByPage != null)
+		{
+			tempSubmissionAnswerDAO.deleteSubmissionAnswersByPage(submission);
 		}
 
 		/*
@@ -428,7 +430,7 @@ public class FormServlet extends HttpServlet
 			return;
 		}
 
-		if (formSubmitted)
+		if (isSubmissionValid)
 		{
 			if (form.getStatus().equals("live"))
 			{
@@ -491,7 +493,7 @@ public class FormServlet extends HttpServlet
 				message.setQuestionNumber(question.getNumber());
 				message.setType("error");
 				message.setSubtype("email");
-				message.setLabel("Question " + question.getNumber() + " must have a valid email address.");
+				message.setLabel("Question " + question.getNumber() + " requires a valid email address.");
 			}
 			/*
 			 * if question is not required but is answered with an invalid email
@@ -503,7 +505,7 @@ public class FormServlet extends HttpServlet
 				message.setQuestionNumber(question.getNumber());
 				message.setType("error");
 				message.setSubtype("email");
-				message.setLabel("If you are going to answer Question " + question.getNumber() + " , please enter a valid email address.");
+				message.setLabel("Question " + question.getNumber() + " requires a valid email address.");
 			}
 		}
 		else if (question.getFilter().equals("date"))
@@ -522,7 +524,7 @@ public class FormServlet extends HttpServlet
 					message.setQuestionNumber(question.getNumber());
 					message.setType("error");
 					message.setSubtype("date");
-					message.setLabel("Question " + question.getNumber() + " date is invalid.");
+					message.setLabel("Question " + question.getNumber() + " requires a valid date.");
 				}
 			}
 			else if (!question.isRequired() && answer.length() > 0)
@@ -534,7 +536,7 @@ public class FormServlet extends HttpServlet
 					message.setQuestionNumber(question.getNumber());
 					message.setType("error");
 					message.setSubtype("date");
-					message.setLabel("If you are going to answer Question " + question.getNumber() + " , please enter a valid date.");
+					message.setLabel("Question " + question.getNumber() + " requires a valid date.");
 				}
 			}
 		}
