@@ -2,26 +2,11 @@ package org.sw.marketing.servlet;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.datatype.XMLGregorianCalendar;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.sw.marketing.dao.DAOFactory;
 import org.sw.marketing.dao.form.FormDAO;
 import org.sw.marketing.dao.form.question.QuestionDAO;
@@ -33,7 +18,6 @@ import org.sw.marketing.data.form.Data.Form;
 import org.sw.marketing.data.form.Data.Score;
 import org.sw.marketing.data.form.Data.Submission;
 import org.sw.marketing.transformation.TransformerHelper;
-import org.sw.marketing.util.DateToXmlGregorianCalendar;
 import org.sw.marketing.util.ReadFile;
 import org.sw.marketing.util.SkinReader;
 import org.sw.marketing.util.SurveyHelper;

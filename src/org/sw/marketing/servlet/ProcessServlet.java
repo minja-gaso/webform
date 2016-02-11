@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sw.marketing.dao.form.FormDAO;
-import org.sw.marketing.dao.question.QuestionDAO;
+import org.sw.marketing.dao.form.question.QuestionDAO;
 import org.sw.marketing.data.form.Data;
 import org.sw.marketing.data.form.Data.Form;
 import org.sw.marketing.data.form.Data.Form.Question;
