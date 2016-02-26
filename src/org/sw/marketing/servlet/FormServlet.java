@@ -44,6 +44,7 @@ public class FormServlet extends HttpServlet
 
 	protected void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
+		System.out.println("************************");
 		String SESSION_ID = request.getSession().getId();
 		String IP_ADDRESS = InetAddress.getLocalHost().getHostAddress();
 
@@ -53,8 +54,6 @@ public class FormServlet extends HttpServlet
 		FormDAO formDAO = DAOFactory.getFormDAO();
 		QuestionDAO questionDAO = DAOFactory.getQuestionDAO();
 		AnswerDAO answerDAO = DAOFactory.getPossibleAnswerDAO();
-		SubmissionDAO submissionDAO = DAOFactory.getSubmissionDAO();
-		SubmissionAnswerDAO submissionAnswerDAO = DAOFactory.getSubmissionAnswerDAO();
 		TempSubmissionDAO tempSubmissionDAO = DAOFactory.getTempSubmissionDAO();
 		TempSubmissionAnswerDAO tempSubmissionAnswerDAO = DAOFactory.getTempSubmissionAnswerDAO();
 
@@ -298,7 +297,7 @@ public class FormServlet extends HttpServlet
 				tempSubmissionDAO.deleteFromTemp(SESSION_ID, formID);
 			}
 		}
-		else
+		else if(messageList != null)
 		{
 			currentPage = previousPage;
 		}
@@ -442,6 +441,7 @@ public class FormServlet extends HttpServlet
 		}
 
 		response.getWriter().println(skinHtmlStr);
+		return;
 	}
 
 	protected ListMultimap<String, String> getFormFields(HttpServletRequest request)
