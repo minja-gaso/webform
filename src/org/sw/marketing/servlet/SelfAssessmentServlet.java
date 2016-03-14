@@ -20,6 +20,7 @@ import org.sw.marketing.dao.DAOFactory;
 import org.sw.marketing.dao.form.FormDAO;
 import org.sw.marketing.dao.form.answer.AnswerDAO;
 import org.sw.marketing.dao.form.question.QuestionDAO;
+import org.sw.marketing.dao.form.skin.FormSkinDAO;
 import org.sw.marketing.dao.form.submission.SubmissionAnswerDAO;
 import org.sw.marketing.dao.form.submission.SubmissionDAO;
 import org.sw.marketing.dao.form.submission.TempSubmissionAnswerDAO;
@@ -28,7 +29,8 @@ import org.sw.marketing.data.form.Data;
 import org.sw.marketing.data.form.Data.Form;
 import org.sw.marketing.data.form.Data.Form.Question;
 import org.sw.marketing.data.form.Data.Form.Question.PossibleAnswer;
-import org.sw.marketing.data.form.Data.Message;
+import org.sw.marketing.data.form.Message;
+import org.sw.marketing.data.form.Skin;
 import org.sw.marketing.data.form.Data.Submission;
 import org.sw.marketing.data.form.Data.Submission.Answer;
 import org.sw.marketing.transformation.TransformerHelper;
@@ -390,19 +392,37 @@ public class SelfAssessmentServlet extends HttpServlet
 		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
 		String skinHtmlStr = null;
 		
-		String skinUrl = form.getSkinUrl();
-		String skinCssSelector = form.getSkinSelector();
-		
-		if(skinUrl.length() > 0 && skinCssSelector.length() > 0)
+		FormSkinDAO skinDAO = DAOFactory.getFormSkinDAO();
+		String paramSkinID = request.getParameter("skinID");
+		long skinID = form.getFkSkinId();
+		if(paramSkinID != null)
 		{
-			skinHtmlStr = getSkinByUrl(skinUrl, skinCssSelector);
+			try
+			{
+				skinID = Long.parseLong(paramSkinID);
+			}
+			catch(NumberFormatException e)
+			{
+				//
+			}
+		}
+		
+		
+		Skin skin = null;
+		if(skinID > 0)
+		{
+			skin = skinDAO.getSkin(skinID);
+		}
+		
+		if(skin != null)
+		{
+			skinHtmlStr = skin.getSkinHtml();
 		}
 		else
 		{
 			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
 		}
-		
-		skinHtmlStr = skinHtmlStr.replace("{NAME}", form.getTitle());
+		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 
 		if(displayXml)
