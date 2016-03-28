@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.validator.routines.EmailValidator;
+import org.jsoup.nodes.Element;
 import org.sw.marketing.dao.DAOFactory;
 import org.sw.marketing.dao.form.FormDAO;
 import org.sw.marketing.dao.form.answer.AnswerDAO;
@@ -428,6 +429,16 @@ public class FormServlet extends HttpServlet
 		}
 		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+		
+		if(skin != null)
+		{
+			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
+			String skinCss = skin.getSkinCssOverrides() + skin.getFormCss();
+			styleElement.text(skinCss);
+			String styleElementStr = styleElement.toString();
+			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);			
+		}
 
 		if (displayXml)
 		{
