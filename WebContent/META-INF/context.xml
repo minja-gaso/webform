@@ -6,8 +6,12 @@
             url="jdbc:postgresql://localhost/marketing"
             username="postgres" password="Zaboravi90" maxActive="20" maxIdle="10"
             maxWait="-1"/>
-  <!-- <Parameter name="assetPath" value="E:\\assets\\" />-->
-  <Parameter name="assetPath" value="C:\\development\\assets\\" />
-  <Parameter name="assetXslPath" value="C:\\development\\assets\\xsl\\webform\\" />
-  <Parameter name="assetEmailPath" value="C:\\development\\assets\\email\\" />
+  <!-- 
+  <Parameter name="assetPath" value="C:/development/assets/" />
+  <Parameter name="assetXslPath" value="C:/development/assets/xsl/webform/" />
+  <Parameter name="assetEmailPath" value="C:/development/assets/email/" />
+  -->
+  <Parameter name="assetPath" value="/var/lib/assets/" />
+  <Parameter name="assetXslPath" value="/var/lib/assets/xsl/webform/" />
+  <Parameter name="assetEmailPath" value="/var/lib/assets/email/" />
 </Context>
