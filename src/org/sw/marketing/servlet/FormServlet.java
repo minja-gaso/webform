@@ -374,7 +374,7 @@ public class FormServlet extends HttpServlet
 		 * generate output
 		 */
 		TransformerHelper transformerHelper = new TransformerHelper();
-		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslFormsPath"));
+		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslUrl"));
 
 		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.form", data);
 
@@ -418,26 +418,28 @@ public class FormServlet extends HttpServlet
 		{
 			skin = skinDAO.getSkin(skinID);
 		}
-		
+
+		System.out.println(xmlStr);
+		response.setCharacterEncoding("utf-8");
+		response.setContentType("text/html");
 		if(skin != null)
 		{
 			skinHtmlStr = skin.getSkinHtml();
-		}
-		else
-		{
-			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
-		}
-		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
-		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
-		
-		if(skin != null)
-		{
+			skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
+			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+			
 			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
-			String skinCss = skin.getSkinCssOverrides() + skin.getFormCss();
+			String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
 			styleElement.text(skinCss);
 			String styleElementStr = styleElement.toString();
 			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
-			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);			
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+			
+			response.getWriter().println(skinHtmlStr);
+		}
+		else
+		{
+			response.getWriter().println(htmlStr);
 		}
 
 		if (displayXml)
@@ -469,10 +471,6 @@ public class FormServlet extends HttpServlet
 			response.sendRedirect(getServletContext().getContextPath() + "/completed/" + redirectId);
 			return;
 		}
-
-		response.setCharacterEncoding("utf-8");
-		response.getWriter().println(skinHtmlStr);
-		return;
 	}
 
 	protected ListMultimap<String, String> getFormFields(HttpServletRequest request)

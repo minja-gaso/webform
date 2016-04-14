@@ -9,5 +9,6 @@
   <!-- <Parameter name="assetPath" value="E:\\assets\\" />-->
   <Parameter name="assetPath" value="C:\\development\\assets\\" />
   <Parameter name="assetXslPath" value="C:\\development\\assets\\xsl\\webform\\" />
+  <Parameter name="assetXslUrl" value="http://localhost:8080/xsl/webform/" />
   <Parameter name="assetEmailPath" value="C:\\development\\assets\\email\\" />
 </Context>
