@@ -369,7 +369,7 @@ public class SelfAssessmentServlet extends HttpServlet
 		 * generate output
 		 */
 		TransformerHelper transformerHelper = new TransformerHelper();
-		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslFormsPath"));
+		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslUrl"));
 		
 		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.form", data);	
 		
@@ -417,20 +417,28 @@ public class SelfAssessmentServlet extends HttpServlet
 		if(skin != null)
 		{
 			skinHtmlStr = skin.getSkinHtml();
+			skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
+			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+			
+			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
+			String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
+			styleElement.text(skinCss);
+			String styleElementStr = styleElement.toString();
+			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+			
+			response.getWriter().println(skinHtmlStr);
 		}
 		else
 		{
-			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
+			response.getWriter().println(htmlStr);
 		}
-		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
-		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 
 		if(displayXml)
 		{
 			System.out.println(xmlStr);
 		}
 
-		response.getWriter().println(skinHtmlStr);
 		
 
 		if(formSubmitted)

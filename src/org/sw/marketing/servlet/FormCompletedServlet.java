@@ -7,6 +7,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.jsoup.nodes.Element;
 import org.sw.marketing.dao.DAOFactory;
 import org.sw.marketing.dao.form.FormDAO;
 import org.sw.marketing.dao.form.question.QuestionDAO;
@@ -100,7 +102,7 @@ public class FormCompletedServlet extends HttpServlet
 		 * generate output
 		 */
 		TransformerHelper transformerHelper = new TransformerHelper();
-		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslFormsPath"));
+		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslUrl"));
 		
 		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.form", data);
 		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "form_message.xsl";
@@ -130,25 +132,29 @@ public class FormCompletedServlet extends HttpServlet
 		{
 			skin = skinDAO.getSkin(skinID);
 		}
-		
+
+		System.out.println(xmlStr);
+		response.setCharacterEncoding("utf-8");
+		response.setContentType("text/html");
 		if(skin != null)
 		{
 			skinHtmlStr = skin.getSkinHtml();
+			skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
+			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+			
+			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
+			String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
+			styleElement.text(skinCss);
+			String styleElementStr = styleElement.toString();
+			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+			
+			response.getWriter().println(skinHtmlStr);
 		}
 		else
 		{
-			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
+			response.getWriter().println(htmlStr);
 		}
-		skinHtmlStr = skinHtmlStr.replace("{TITLE}", form.getTitle());
-		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
-		
-		/*
-		 * display output
-		 */
-		System.out.println(xmlStr);
-		
-		response.setContentType("text/html");
-		response.getWriter().println(skinHtmlStr);
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
